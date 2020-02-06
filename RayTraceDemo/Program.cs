@@ -10,28 +10,34 @@ namespace RayTraceDemo
         static void Main(string[] args)
         {
             var world = new Map(new [] {
-                "          ",
+                "    c     ",
                 "          ",
                 "       ## ",
                 "          ",
                 "          ",
                 " ###      ",
                 "          ",
-                "     c    ",
+                "          ",
                 "          ",
                 "          ",
             });
             
             const int resolution = 320;
 
-            for (var column = 0; column < resolution; column++)
+            world.DefaultCamera.DirectionInDegrees = 90;
+
+            for (var column = 0.00; column < resolution; column++)
             {
                 var x = column / resolution - 0.5;
                 var angle = Math.Atan2(x, world.DefaultCamera.FocalLength);
                 var ray = world.DefaultCamera.SetDirection(angle).Cast();
+                
+                Console.WriteLine($"Column {column} {x} {angle}°: {ray.First().Height}");
             }
-        }
 
+            Console.WriteLine("Any KEY to exit");
+            Console.ReadKey();
+        }
     }
 
     public class Map
@@ -63,7 +69,6 @@ namespace RayTraceDemo
 
         public Map World { get; }
 
-
         public Camera(int x, int y, Map world, int range = 14, double focalLength = 0.8)
         {
             Location2D = new Location2D { X = x, Y = y };
@@ -74,7 +79,7 @@ namespace RayTraceDemo
 
         public Camera SetDirection(double angle)
         {
-            this.CurrentDirection = new CastDirection(DirectionInDegrees + angle);
+            CurrentDirection = new CastDirection(DirectionInDegrees + angle);
             return this;
         }
 
@@ -84,6 +89,7 @@ namespace RayTraceDemo
         {
             var stepX = Step(CurrentDirection.Sin, CurrentDirection.Cos, origin.Location.X, origin.Location.Y);
             var stepY = Step(CurrentDirection.Cos, CurrentDirection.Sin, origin.Location.Y, origin.Location.X, true);
+            
             var nextStep = stepX.Length2 < stepY.Length2
                 ? Inspect(stepX, 1, 0, origin.Distance, stepX.Location.Y)
                 : Inspect(stepY, 0, 1, origin.Distance, stepY.Location.X);
@@ -103,15 +109,13 @@ namespace RayTraceDemo
             var dx = run > 0 ? Math.Floor(x + 1) - x : Math.Ceiling(x - 1) - x;
             var dy = dx * (rise / run);
 
-            var loc = new Location2D 
-            {
-                X = inverted ? y + dy : x + dx,
-                Y = inverted ? x + dx : y + dy
-            };
-
             return new Intersection
             {
-                Location = loc,
+                Location = new Location2D 
+                {
+                    X = inverted ? y + dy : x + dx,
+                    Y = inverted ? x + dx : y + dy
+                },
                 Length2 = dx * dx + dy * dy
             };
         }
@@ -120,32 +124,28 @@ namespace RayTraceDemo
         {
             var dx = CurrentDirection.Cos < 0 ? shiftX : 0;
             var dy = CurrentDirection.Sin < 0 ? shiftY : 0;
+            
             step.Height = CalculateHeight(step.Location.X - dx, step.Location.Y - dy);
             step.Distance = distance + Math.Sqrt(step.Length2);
-            
-            if (shiftX == 1)
-            {
-                step.Shading = CurrentDirection.Cos < 0 ? 2 : 0;
-            }
-            else
-            {
-                step.Shading = CurrentDirection.Sin < 0 ? 2 : 1;
-            }
+            step.Shading = shiftX == 1 
+                ? CurrentDirection.Cos < 0 ? 2 : 0 
+                : CurrentDirection.Sin < 0 ? 2 : 1;
 
             step.Offset = offset - Math.Floor(offset);
             return step;
         }
 
-        public int CalculateHeight(double x, double y)
+        public int CalculateHeight(double xDouble, double yDouble)
         {
-            x = Math.Floor(x);
-            y = Math.Floor(y);
+            var x = (int) Math.Floor(xDouble);
+            var y = (int) Math.Floor(yDouble);
+
             if (x < 0 || x > this.World.Size - 1 || y < 0 || y > this.World.Size - 1)
             {
                 return -1;
             }
 
-            return this.wallGrid[y * this.World.Size + x];
+            return World.Topology[y][x] == '#' ? 1 : 0;
         }
     }
 
