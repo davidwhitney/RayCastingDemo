@@ -10,32 +10,64 @@ namespace RayTraceDemo
         static void Main(string[] args)
         {
             var world = new Map(new [] {
-                "    c     ",
-                "          ",
-                "       ## ",
                 "          ",
                 "          ",
-                " ###      ",
+                "      ### ",
+                "          ",
+                " #####    ",
+                " #####    ",
                 "          ",
                 "          ",
-                "          ",
+                "         c",
                 "          ",
             });
-            
-            const int resolution = 320;
 
-            world.DefaultCamera.DirectionInDegrees = 90;
+            const int renderWidth = 320;
+            const int renderHeight = 50;
 
-            for (var column = 0.00; column < resolution; column++)
+            var camera = new Camera(world.CameraLocation.X, world.CameraLocation.Y, world) { DirectionInDegrees = 180 };
+            var rayContacts = new List<Intersection>();
+
+            for (var column = 0.00; column < renderWidth; column++)
             {
-                var x = column / resolution - 0.5;
-                var angle = Math.Atan2(x, world.DefaultCamera.FocalLength);
-                var ray = world.DefaultCamera.SetDirection(angle).Cast();
-                
-                Console.WriteLine($"Column {column} {x} {angle}°: {ray.First().Height}");
+                var x = column / renderWidth - 0.5;
+                var angle = Math.Atan2(x, camera.FocalLength);
+                var ray = camera.SetDirection(angle).Cast().ToList();
+                rayContacts.Add(ray.Last());
+            }
+            
+            var pixels = new char[renderHeight, renderWidth];
+
+            for (var x = 0; x < rayContacts.Count; x++)
+            {
+                var ray = rayContacts[x];
+
+                var thisHeight = (renderHeight * ray.Height) / (ray.Distance / 3);
+                thisHeight = ray.Height <= 0 ? 0 : thisHeight;
+
+                var height = Math.Ceiling(thisHeight);
+
+                for (var y = 0; y < height; y++)
+                {
+                    var index = renderHeight - y - 1;
+                    pixels[index, x] = '#';
+                }
             }
 
-            Console.WriteLine("Any KEY to exit");
+            Console.Clear();
+            Console.SetWindowSize(320, 60);
+            Console.SetCursorPosition(0, 0);
+
+            for (var y = 0; y < renderHeight; y++)
+            {
+                for (var x = 0; x < renderWidth; x++)
+                {
+                    Console.Write(pixels[y, x]);
+                }
+                Console.Write("\r\n");
+            }
+
+            Console.Write("\r\n");
             Console.ReadKey();
         }
     }
@@ -44,7 +76,7 @@ namespace RayTraceDemo
     {
         public List<string> Topology { get; }
         public int Size { get; }
-        public Camera DefaultCamera { get; }
+        public Location2D CameraLocation { get; }
 
         public Map(IEnumerable<string> topology)
         {
@@ -54,8 +86,8 @@ namespace RayTraceDemo
             var playerRow = Topology.Single(line => line.Contains("c"));
             var cameraY = Topology.IndexOf(playerRow);
             var cameraX = Topology[cameraY].IndexOf("c", StringComparison.Ordinal);
+            CameraLocation = new Location2D { X = cameraX, Y = cameraY };
             Topology[cameraY] = Topology[cameraY].Replace("c", " ");
-            DefaultCamera = new Camera(cameraX, cameraY, this);
         }
     }
 
@@ -69,7 +101,7 @@ namespace RayTraceDemo
 
         public Map World { get; }
 
-        public Camera(int x, int y, Map world, int range = 14, double focalLength = 0.8)
+        public Camera(double x, double y, Map world, int range = 14, double focalLength = 0.8)
         {
             Location2D = new Location2D { X = x, Y = y };
             World = world;
@@ -87,19 +119,27 @@ namespace RayTraceDemo
 
         public IEnumerable<Intersection> Ray(Intersection origin)
         {
-            var stepX = Step(CurrentDirection.Sin, CurrentDirection.Cos, origin.Location.X, origin.Location.Y);
-            var stepY = Step(CurrentDirection.Cos, CurrentDirection.Sin, origin.Location.Y, origin.Location.X, true);
+            var stepX = ComputeNextStepLocation(CurrentDirection.Sin, CurrentDirection.Cos, origin.Location.X, origin.Location.Y);
+            var stepY = ComputeNextStepLocation(CurrentDirection.Cos, CurrentDirection.Sin, origin.Location.Y, origin.Location.X, true);
             
             var nextStep = stepX.Length2 < stepY.Length2
                 ? Inspect(stepX, 1, 0, origin.Distance, stepX.Location.Y)
                 : Inspect(stepY, 0, 1, origin.Distance, stepY.Location.X);
 
-            return nextStep.Distance > Range
-                ? new List<Intersection> { origin }
-                : new List<Intersection> { origin }.Concat(Ray(nextStep));
+            if (nextStep.Distance > Range)
+            {
+                return new List<Intersection> {origin};
+            }
+
+            if (nextStep.Height > 0)
+            {
+                return new List<Intersection> { nextStep };
+            }
+
+            return new List<Intersection> {origin}.Concat(Ray(nextStep));
         }
 
-        public Intersection Step(double rise, double run, double x, double y, bool inverted = false)
+        public Intersection ComputeNextStepLocation(double rise, double run, double x, double y, bool inverted = false)
         {
             if (run == 0.0)
             {
@@ -139,10 +179,10 @@ namespace RayTraceDemo
         {
             var x = (int) Math.Floor(xDouble);
             var y = (int) Math.Floor(yDouble);
-
-            if (x < 0 || x > this.World.Size - 1 || y < 0 || y > this.World.Size - 1)
+            
+            if (x < 0 || x > World.Size - 1 || y < 0 || y > World.Size - 1)
             {
-                return -1;
+                return 0;
             }
 
             return World.Topology[y][x] == '#' ? 1 : 0;
@@ -191,5 +231,4 @@ namespace RayTraceDemo
         public double X;
         public double Y;
     }
-
 }
