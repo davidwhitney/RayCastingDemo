@@ -34,15 +34,21 @@ namespace RayTraceDemo
             var camera = new Camera(world.CameraLocation.X, world.CameraLocation.Y, world) { DirectionInDegrees = 180 };
             var rayContacts = new List<PathNode>();
 
+            var allVisitedNodes = new List<PathNode>();
+
             for (var column = 0; column < renderWidth; column++)
             {
                 var x = (double) column / renderWidth - 0.5;
                 var angle = Math.Atan2(x, camera.FocalLength);
                 var rayPath = camera.SetDirection(angle).Ray();
+                allVisitedNodes.AddRange(rayPath);
+
                 rayContacts.Add(rayPath.Last());
             }
 
             DrawToImage(renderHeight, renderWidth, rayContacts, camera);
+
+            Console.WriteLine(world.ToString(allVisitedNodes));
 
             Console.Write("\r\n");
             Console.ReadKey();
@@ -119,6 +125,21 @@ namespace RayTraceDemo
             var cameraX = Topology[cameraY].IndexOf("c", StringComparison.Ordinal);
             CameraLocation = new Location2D { X = cameraX, Y = cameraY };
             Topology[cameraY] = Topology[cameraY].Replace("c", " ");
+        }
+
+        public string ToString(IEnumerable<PathNode> markLocations)
+        {
+            var copy = new List<string>(Topology);
+            foreach (var item in markLocations)
+            {
+                var intX = (int) item.Location.X;
+                var intY = (int) item.Location.Y;
+
+                var temp = copy[intY].ToCharArray();
+                temp[intX] = '.';
+                copy[intY] = new string(temp);
+            }
+            return string.Join(Environment.NewLine, copy);
         }
     }
 
