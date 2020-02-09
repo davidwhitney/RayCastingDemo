@@ -165,15 +165,16 @@ namespace RayTraceDemo
                     ? Inspect(stepX, 1, 0, currentStep.Distance, stepX.Location.Y)
                     : Inspect(stepY, 0, 1, currentStep.Distance, stepY.Location.X);
 
-                if (nextStep.Distance > Range)
-                {
-                    return rayPath;
-                }
 
                 if (nextStep.IsNotAVerticalSurface)
                 {
                     currentStep = nextStep;
                     continue;
+                }
+
+                if (nextStep.Distance > Range)
+                {
+                    return rayPath;
                 }
 
                 rayPath.Add(nextStep);
