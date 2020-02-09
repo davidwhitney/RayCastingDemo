@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Enumeration;
 using System.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -14,20 +13,20 @@ namespace RayTraceDemo
         static void Main(string[] args)
         {
             var world = new Map(new [] {
-                "###       ",
-                "          ",
-                "      ### ",
-                "          ",
-                " ##       ",
-                " ##       ",
-                "          ",
-                "          ",
-                "         c",
-                "          ",
+                "####################",
+                "#                  #",
+                "#      ######      #",
+                "#         ###      #",
+                "###       ###      #",
+                "###                #",
+                "###                #",
+                "###                #",
+                "###         c      #",
+                "####################",
             });
 
-            const int renderWidth = 1600;
-            const int renderHeight = 1200;
+            const int renderWidth = 2560;
+            const int renderHeight = 1440;
 
             var camera = new Camera(world.CameraLocation.X, world.CameraLocation.Y, world) { DirectionInDegrees = 180 };
             var rayContacts = new List<Intersection>();
@@ -40,15 +39,15 @@ namespace RayTraceDemo
                 rayContacts.Add(ray.Last());
             }
             
-            DrawToConsole(renderHeight, renderWidth, rayContacts);
+            DrawToImage(renderHeight, renderWidth, rayContacts, camera);
 
             Console.Write("\r\n");
             Console.ReadKey();
         }
 
-        private static void DrawToConsole(int renderHeight, int renderWidth, IReadOnlyList<Intersection> rayContacts)
+        private static void DrawToImage(int renderHeight, int renderWidth, IReadOnlyList<Intersection> rayContacts, Camera camera)
         {
-            var pixels = new char[renderHeight, renderWidth];
+            var pixels = new Rgba32[renderHeight, renderWidth];
 
             for (var x = 0; x < rayContacts.Count; x++)
             {
@@ -57,9 +56,11 @@ namespace RayTraceDemo
                 var thisHeight = (renderHeight * ray.Height) / (ray.Distance / 3);
                 thisHeight = ray.Height <= 0 ? 0 : thisHeight;
                 
-                var texture = SelectTexture(ray);
+                var texture = SelectTexture(ray, camera);
 
                 var height = Math.Ceiling(thisHeight);
+                height = height > renderHeight ? renderHeight : height;
+
                 var offset = (int)Math.Floor((renderHeight - height) / 2);
 
                 for (var y = 0; y < height; y++)
@@ -74,12 +75,12 @@ namespace RayTraceDemo
             }
             
             using var img = new Image<Rgba32>(renderWidth, renderHeight);
-
+            
             for (var y = 0; y < renderHeight; y++)
             {
                 for (var x = 0; x < renderWidth; x++)
                 {
-                    img[x, y] = pixels[y, x] != '\0' ? Rgba32.White : Rgba32.Black;
+                    img[x, y] = pixels[y, x];
                 }
             }
 
@@ -90,30 +91,13 @@ namespace RayTraceDemo
 
             var processStartInfo = new ProcessStartInfo { FileName = Path.Combine(Environment.CurrentDirectory, "out.jpg"), UseShellExecute = true };
             Process.Start(processStartInfo);
-
-
         }
 
-        private static char SelectTexture(Intersection ray)
+        private static Rgba32 SelectTexture(Intersection ray, Camera camera)
         {
-            if (ray.Distance >= 10)
-            {
-                return '░';
-            } 
-            else if (ray.Distance >= 6.5)
-            {
-                return '▒';
-            }
-            else if (ray.Distance >= 5.5)
-            {
-                return '▓';
-            }
-            else if (ray.Distance > 0)
-            {
-                return '█';
-            }
-
-            return ' ';
+            var percentage = (ray.Distance / camera.Range) * 100;
+            var brightness = 255 - ((255 / 100) * percentage);
+            return new Rgba32((byte)brightness, (byte)brightness, (byte)brightness);
         }
     }
 
@@ -212,11 +196,8 @@ namespace RayTraceDemo
             
             step.Height = CalculateHeight(step.Location.X - dx, step.Location.Y - dy);
             step.Distance = distance + Math.Sqrt(step.Length2);
-            step.Shading = shiftX == 1 
-                ? CurrentDirection.Cos < 0 ? 2 : 0 
-                : CurrentDirection.Sin < 0 ? 2 : 1;
-
             step.Offset = offset - Math.Floor(offset);
+
             return step;
         }
 
@@ -253,7 +234,6 @@ namespace RayTraceDemo
         public double Height { get; set; }
         public double Distance { get; set; }
 
-        public int Shading { get; set; }
         public double Offset { get; set; }
 
         public Intersection()
