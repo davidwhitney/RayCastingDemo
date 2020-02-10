@@ -22,6 +22,21 @@ namespace RayTraceDemo.RayCasting
             CameraLocation = new Location2D { X = cameraX, Y = cameraY };
         }
 
+        public Surface SurfaceAt(int x, int y)
+        { 
+            // Detect various materials from our map, and their properties
+            // But we only know about full height walls for now.
+
+            var glyph = Topology[y][x];
+            
+            if (glyph == '#')
+            {
+                return new Surface {Height = 1};
+            }
+
+            return Surface.Nothing;
+        }
+
         public string ToDebugString(IEnumerable<Ray.SamplePoint> markLocations)
         {
             var copy = new List<string>(Topology);

@@ -24,7 +24,7 @@ namespace RayTraceDemo
             {
                 var samplePoint = columnData[column];
 
-                var height = (RenderHeight * samplePoint.Height) / (samplePoint.Distance / 2.5);
+                var height = (RenderHeight * samplePoint.Surface.Height) / (samplePoint.Distance / 2.5);
                 height = height <= 0 ? 0 : height;
                 height = Math.Ceiling(height);
                 height = height > RenderHeight ? RenderHeight : height;

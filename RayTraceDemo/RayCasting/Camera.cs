@@ -65,7 +65,7 @@ namespace RayTraceDemo.RayCasting
                     : Inspect(stepY, 0, 1, currentStep.Distance);
 
 
-                if (nextStep.IsNotAVerticalSurface)
+                if (nextStep.Surface.HasNoHeight)
                 {
                     currentStep = nextStep;
                     continue;
@@ -81,7 +81,7 @@ namespace RayTraceDemo.RayCasting
             }
         }
 
-        private Ray.SamplePoint ComputeNextStepLocation(double rise, double run, double x, double y, bool inverted = false)
+        private static Ray.SamplePoint ComputeNextStepLocation(double rise, double run, double x, double y, bool inverted = false)
         {
             var dx = run > 0 ? Math.Floor(x + 1) - x : Math.Ceiling(x - 1) - x;
             var dy = dx * (rise / run);
@@ -101,23 +101,23 @@ namespace RayTraceDemo.RayCasting
             var dx = _currentDirection.Cos < 0 ? shiftX : 0;
             var dy = _currentDirection.Sin < 0 ? shiftY : 0;
             
-            step.Height = CalculateHeight(step.Location.X - dx, step.Location.Y - dy);
+            step.Surface = DetectSurface(step.Location.X - dx, step.Location.Y - dy);
             step.Distance = distance + Math.Sqrt(step.Length);
 
             return step;
         }
 
-        private int CalculateHeight(double xDouble, double yDouble)
+        private Surface DetectSurface(double xDouble, double yDouble)
         {
             var x = (int) Math.Floor(xDouble);
             var y = (int) Math.Floor(yDouble);
             
             if (x < 0 || x > World.Size - 1 || y < 0 || y > World.Size - 1)
             {
-                return 0;
+                return Surface.Nothing;
             }
 
-            return World.Topology[y][x] == '#' ? 1 : 0;
+            return World.SurfaceAt(x, y);
         }
 
         private class CastDirection
