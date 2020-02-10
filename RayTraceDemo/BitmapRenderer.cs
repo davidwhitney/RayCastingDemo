@@ -16,9 +16,9 @@ namespace RayTraceDemo
             RenderWidth = renderWidth;
         }
 
-        public Rgba32[,] RenderBitmap(IReadOnlyList<Ray.SamplePoint> columnData, Camera camera)
+        public Rgba32?[,] RenderBitmap(IReadOnlyList<Ray.SamplePoint> columnData, Camera camera)
         {
-            var pixels = new Rgba32[RenderWidth, RenderHeight];
+            var pixels = new Rgba32?[RenderWidth, RenderHeight];
 
             for (var column = 0; column < columnData.Count; column++)
             {

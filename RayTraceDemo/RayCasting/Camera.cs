@@ -14,9 +14,9 @@ namespace RayTraceDemo.RayCasting
         
         private CastDirection _currentDirection;
 
-        public Camera(double x, double y, Map world, int range = 25, double focalLength = 0.8)
+        public Camera(Location2D location, Map world, int range = 25, double focalLength = 0.8)
         {
-            Location2D = new Location2D { X = x, Y = y };
+            Location2D = location;
             World = world;
             Range = range;
             FocalLength = focalLength;
@@ -42,11 +42,10 @@ namespace RayTraceDemo.RayCasting
             return result;
         }
 
-        private Camera SetDirection(double angle)
+        private void SetDirection(double angle)
         {
             var directionInDegrees = DirectionInDegrees + angle;
             _currentDirection = new CastDirection(directionInDegrees);
-            return this;
         }
 
         private Ray Ray(Ray.SamplePoint origin)
