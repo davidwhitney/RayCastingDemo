@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using RayTraceDemo.RayCasting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -34,28 +32,16 @@ namespace RayTraceDemo
             const int renderHeight = 1440;
 
             var camera = new Camera(world.CameraLocation.X, world.CameraLocation.Y, world) {DirectionInDegrees = 4};
-
-            var allSamples = new List<Ray.SamplePoint>();
-            var finalSamplePoints = new List<Ray.SamplePoint>();
-
-            for (var column = 0; column < renderWidth; column++)
-            {
-                var x = (double) column / renderWidth - 0.5;
-                var angle = Math.Atan2(x, camera.FocalLength);
-
-                var ray = camera.SetDirection(angle).Ray();
-
-                allSamples.AddRange(ray);
-                finalSamplePoints.Add(ray.Last());
-            }
-
             var renderer = new BitmapRenderer(renderHeight, renderWidth);
-            var pixels = renderer.RenderBitmap(finalSamplePoints, camera);
+
+            var result = camera.Render(renderWidth);
+            Console.WriteLine(world.ToDebugString(result.AllSamplePoints));
+            
+            var pixels = renderer.RenderBitmap(result.Columns, camera);
             var path = SaveToJpeg(renderHeight, renderWidth, pixels);
 
             Process.Start(new ProcessStartInfo {FileName = path, UseShellExecute = true});
 
-            Console.WriteLine(world.ToDebugString(allSamples));
             Console.ReadKey();
         }
 

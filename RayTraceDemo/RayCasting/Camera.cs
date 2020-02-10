@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RayTraceDemo.RayCasting
 {
@@ -6,11 +8,11 @@ namespace RayTraceDemo.RayCasting
     {
         public Location2D Location2D { get; set; }
         public double DirectionInDegrees { get; set; }
-        public CastDirection CurrentDirection { get; set; }
         public int Range { get; set; }
         public double FocalLength { get; }
-
         public Map World { get; }
+        
+        private CastDirection _currentDirection;
 
         public Camera(double x, double y, Map world, int range = 25, double focalLength = 0.8)
         {
@@ -20,16 +22,34 @@ namespace RayTraceDemo.RayCasting
             FocalLength = focalLength;
         }
 
-        public Camera SetDirection(double angle)
+        public RenderResult Render(int renderWidth)
+        {
+            var result = new RenderResult();
+
+            for (var column = 0; column < renderWidth; column++)
+            {
+                var x = (double)column / renderWidth - 0.5;
+                var angle = Math.Atan2(x, FocalLength);
+
+                SetDirection(angle);
+
+                var ray = Ray(new Ray.SamplePoint(Location2D));
+
+                result.AllSamplePoints.AddRange(ray);
+                result.Columns.Add(ray.Last());
+            }
+
+            return result;
+        }
+
+        private Camera SetDirection(double angle)
         {
             var directionInDegrees = DirectionInDegrees + angle;
-            CurrentDirection = new CastDirection(directionInDegrees);
+            _currentDirection = new CastDirection(directionInDegrees);
             return this;
         }
 
-        public Ray Ray() => Ray(new Ray.SamplePoint(Location2D));
-
-        public Ray Ray(Ray.SamplePoint origin)
+        private Ray Ray(Ray.SamplePoint origin)
         {
             var rayPath = new Ray();
             var currentStep = origin;
@@ -38,8 +58,8 @@ namespace RayTraceDemo.RayCasting
             {
                 rayPath.Add(currentStep);
 
-                var stepX = ComputeNextStepLocation(CurrentDirection.Sin, CurrentDirection.Cos, currentStep.Location.X, currentStep.Location.Y);
-                var stepY = ComputeNextStepLocation(CurrentDirection.Cos, CurrentDirection.Sin, currentStep.Location.Y, currentStep.Location.X, true);
+                var stepX = ComputeNextStepLocation(_currentDirection.Sin, _currentDirection.Cos, currentStep.Location.X, currentStep.Location.Y);
+                var stepY = ComputeNextStepLocation(_currentDirection.Cos, _currentDirection.Sin, currentStep.Location.Y, currentStep.Location.X, true);
 
                 var nextStep = stepX.Length < stepY.Length
                     ? Inspect(stepX, 1, 0, currentStep.Distance)
@@ -62,26 +82,25 @@ namespace RayTraceDemo.RayCasting
             }
         }
 
-        public Ray.SamplePoint ComputeNextStepLocation(double rise, double run, double x, double y, bool inverted = false)
+        private Ray.SamplePoint ComputeNextStepLocation(double rise, double run, double x, double y, bool inverted = false)
         {
             var dx = run > 0 ? Math.Floor(x + 1) - x : Math.Ceiling(x - 1) - x;
             var dy = dx * (rise / run);
 
-            return new Ray.SamplePoint
+            var length = dx * dx + dy * dy;
+            var location2D = new Location2D
             {
-                Location = new Location2D 
-                {
-                    X = inverted ? y + dy : x + dx,
-                    Y = inverted ? x + dx : y + dy
-                },
-                Length = dx * dx + dy * dy
+                X = inverted ? y + dy : x + dx,
+                Y = inverted ? x + dx : y + dy
             };
+
+            return new Ray.SamplePoint(location2D, length);
         }
 
-        public Ray.SamplePoint Inspect(Ray.SamplePoint step, int shiftX, int shiftY, double distance)
+        private Ray.SamplePoint Inspect(Ray.SamplePoint step, int shiftX, int shiftY, double distance)
         {
-            var dx = CurrentDirection.Cos < 0 ? shiftX : 0;
-            var dy = CurrentDirection.Sin < 0 ? shiftY : 0;
+            var dx = _currentDirection.Cos < 0 ? shiftX : 0;
+            var dy = _currentDirection.Sin < 0 ? shiftY : 0;
             
             step.Height = CalculateHeight(step.Location.X - dx, step.Location.Y - dy);
             step.Distance = distance + Math.Sqrt(step.Length);
@@ -89,7 +108,7 @@ namespace RayTraceDemo.RayCasting
             return step;
         }
 
-        public int CalculateHeight(double xDouble, double yDouble)
+        private int CalculateHeight(double xDouble, double yDouble)
         {
             var x = (int) Math.Floor(xDouble);
             var y = (int) Math.Floor(yDouble);
@@ -102,7 +121,7 @@ namespace RayTraceDemo.RayCasting
             return World.Topology[y][x] == '#' ? 1 : 0;
         }
 
-        public class CastDirection
+        private class CastDirection
         {
             public double Sin { get; }
             public double Cos { get; }
@@ -112,6 +131,12 @@ namespace RayTraceDemo.RayCasting
                 Sin = Math.Sin(angle);
                 Cos = Math.Cos(angle);
             }
+        }
+
+        public class RenderResult
+        {
+            public List<Ray.SamplePoint> Columns { get; } = new List<Ray.SamplePoint>();
+            public List<Ray.SamplePoint> AllSamplePoints { get; } = new List<Ray.SamplePoint>();
         }
     }
 }

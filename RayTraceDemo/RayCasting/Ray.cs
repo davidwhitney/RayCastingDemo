@@ -11,11 +11,7 @@ namespace RayTraceDemo.RayCasting
             public double Height { get; set; }
             public double Distance { get; set; }
 
-            public SamplePoint()
-            {
-            }
-
-            public SamplePoint(Location2D location2D, int length = 0, int height = 0, int distance = 0)
+            public SamplePoint(Location2D location2D, double length = 0, double height = 0, double distance = 0)
             {
                 Location = location2D;
                 Length = length;

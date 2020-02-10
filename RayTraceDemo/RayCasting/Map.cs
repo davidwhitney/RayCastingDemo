@@ -15,11 +15,11 @@ namespace RayTraceDemo.RayCasting
             Topology = topology.ToList();
             Size = Topology.First().Length;
 
-            var playerRow = Topology.Single(line => line.Contains("c"));
-            var cameraY = Topology.IndexOf(playerRow);
+            var cameraY = Topology.IndexOf(Topology.Single(line => line.Contains("c")));
             var cameraX = Topology[cameraY].IndexOf("c", StringComparison.Ordinal);
-            CameraLocation = new Location2D { X = cameraX, Y = cameraY };
             Topology[cameraY] = Topology[cameraY].Replace("c", " ");
+
+            CameraLocation = new Location2D { X = cameraX, Y = cameraY };
         }
 
         public string ToDebugString(IEnumerable<Ray.SamplePoint> markLocations)
