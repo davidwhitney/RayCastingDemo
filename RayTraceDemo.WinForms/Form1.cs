@@ -21,7 +21,7 @@ namespace RayTraceDemo.WinForms
         private readonly int _renderHeight;
         private readonly PictureBox _p;
         private readonly byte[] _bgBytes;
-        private Timer _timer;
+        private readonly Timer _timer;
 
         public Form1()
         {
@@ -47,7 +47,8 @@ namespace RayTraceDemo.WinForms
             _renderWidth = 2560;
             _renderHeight = 1440;
 
-            _bgBytes = File.ReadAllBytes("bg.jpg");
+            _bgBytes = LoadAndSizeBackground(_renderWidth, _renderHeight).ToArray();
+
             _p = new PictureBox {Width = _renderWidth, Height = _renderHeight};
             Controls.Add(_p);
             
@@ -56,9 +57,21 @@ namespace RayTraceDemo.WinForms
 
             KeyDown += KeyDownHandler;
 
-            _timer = new Timer((1000 / 30)) {AutoReset = true};
+            const int fps = 30;
+            _timer = new Timer((1000 / fps)) {AutoReset = true};
             _timer.Elapsed += OnInterval;
             _timer.Start();
+        }
+
+        private static MemoryStream LoadAndSizeBackground(int renderWidth, int renderHeight)
+        {
+            var bgBytes = File.ReadAllBytes("bg.jpg");
+            using var img = SixLabors.ImageSharp.Image.Load<Rgba32>(bgBytes);
+            var memoryStream = new MemoryStream();
+            img.Mutate(x => x.Resize(renderWidth, renderHeight));
+            img.SaveAsBmp(memoryStream);
+            memoryStream.Position = 0;
+            return memoryStream;
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -88,36 +101,33 @@ namespace RayTraceDemo.WinForms
 
         private void OnInterval(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if(Monitor.TryEnter(_p))
+            if (!Monitor.TryEnter(_p)) return;
+
+            var result = _camera.Render(_renderWidth);
+            var pixels = _renderer.RenderBitmap(result.Columns, _camera);
+
+            var img = SixLabors.ImageSharp.Image.Load<Rgba32>(_bgBytes);
+
+            for (var y = 0; y < _renderHeight; y++)
             {
-                var result = _camera.Render(_renderWidth);
-                var pixels = _renderer.RenderBitmap(result.Columns, _camera);
-
-                using var img = SixLabors.ImageSharp.Image.Load<Rgba32>(_bgBytes);
-                img.Mutate(x => x.Resize(_renderWidth, _renderHeight));
-
-                for (var y = 0; y < _renderHeight; y++)
+                for (var x = 0; x < _renderWidth; x++)
                 {
-                    for (var x = 0; x < _renderWidth; x++)
+                    if (pixels[x, y] == null)
                     {
-                        var rgba32 = pixels[x, y];
-                        if (rgba32 == null)
-                        {
-                            continue;
-                        }
-
-                        img[x, y] = rgba32.Value;
+                        continue;
                     }
+
+                    img[x, y] = pixels[x, y].Value;
                 }
-
-
-                var memoryStream = new MemoryStream();
-                img.SaveAsBmp(memoryStream);
-                _p.Image = Image.FromStream(memoryStream);
-                img.Dispose();
-
-                Monitor.Exit(_p);
             }
+
+
+            var memoryStream = new MemoryStream();
+            img.SaveAsBmp(memoryStream);
+            _p.Image = Image.FromStream(memoryStream);
+            img.Dispose();
+
+            Monitor.Exit(_p);
         }
     }
 }

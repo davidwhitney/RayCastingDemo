@@ -4,6 +4,13 @@ namespace RayTraceDemo.RayCasting
 {
     public class Ray : List<Ray.SamplePoint>
     {
+        public int Column { get; }
+
+        public Ray(in int column)
+        {
+            Column = column;
+        }
+
         public class SamplePoint
         {
             public Location2D Location { get; set; }
