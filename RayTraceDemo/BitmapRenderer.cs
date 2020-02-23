@@ -42,7 +42,7 @@ namespace RayTraceDemo
                     pixels[column, yCoord] = texture;
                 }
             }
-
+            
             return pixels;
         }
 

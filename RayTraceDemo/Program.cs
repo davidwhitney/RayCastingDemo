@@ -8,9 +8,9 @@ using SixLabors.ImageSharp.Processing;
 
 namespace RayTraceDemo
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             var world = new Map(new[]
             {
@@ -23,9 +23,9 @@ namespace RayTraceDemo
                 "##                                     #",
                 "#                               ########",
                 "#                               ########",
-                "#          c                           #",
+                "#                                      #",
                 "###                                    #",
-                "###                                    #",
+                "###        c                           #",
                 "########################################",
             });
 
