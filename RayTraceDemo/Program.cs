@@ -32,7 +32,7 @@ namespace RayTraceDemo
             const int renderWidth = 2560;
             const int renderHeight = 1440;
 
-            var camera = new Camera(world.CameraLocation, world) {DirectionInDegrees = 4};
+            var camera = new Camera(world.CameraLocation, world) {DirectionInDegrees = 0};
             var renderer = new BitmapRenderer(renderHeight, renderWidth);
 
             var result = camera.Render(renderWidth);
