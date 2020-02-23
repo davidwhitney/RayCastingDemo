@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using RayTraceDemo.RayCasting;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -20,7 +21,7 @@ namespace RayTraceDemo
         {
             var pixels = new Rgba32?[RenderWidth, RenderHeight];
 
-            for (var column = 0; column < columnData.Count; column++)
+            Parallel.For(0, columnData.Count, column =>
             {
                 var samplePoint = columnData[column];
 
@@ -41,7 +42,7 @@ namespace RayTraceDemo
 
                     pixels[column, yCoord] = texture;
                 }
-            }
+            });
             
             return pixels;
         }

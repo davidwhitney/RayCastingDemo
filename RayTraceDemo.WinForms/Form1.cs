@@ -1,6 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.IO;
+﻿using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using RayTraceDemo.RayCasting;
@@ -22,6 +20,7 @@ namespace RayTraceDemo.WinForms
         private readonly PictureBox _p;
         private readonly byte[] _bgBytes;
         private readonly Timer _timer;
+        private Image<Rgba32> _bgImg;
 
         public Form1()
         {
@@ -48,6 +47,7 @@ namespace RayTraceDemo.WinForms
             _renderHeight = 1440;
 
             _bgBytes = LoadAndSizeBackground(_renderWidth, _renderHeight).ToArray();
+            _bgImg = SixLabors.ImageSharp.Image.Load<Rgba32>(_bgBytes);
 
             _p = new PictureBox {Width = _renderWidth, Height = _renderHeight};
             Controls.Add(_p);
@@ -105,9 +105,8 @@ namespace RayTraceDemo.WinForms
 
             var result = _camera.Render(_renderWidth);
             var pixels = _renderer.RenderBitmap(result.Columns, _camera);
-
-            var img = SixLabors.ImageSharp.Image.Load<Rgba32>(_bgBytes);
-
+            
+            var img = _bgImg.Clone();
             for (var y = 0; y < _renderHeight; y++)
             {
                 for (var x = 0; x < _renderWidth; x++)
@@ -120,7 +119,6 @@ namespace RayTraceDemo.WinForms
                     img[x, y] = pixels[x, y].Value;
                 }
             }
-
 
             var memoryStream = new MemoryStream();
             img.SaveAsBmp(memoryStream);

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace RayTraceDemo.RayCasting
 {
@@ -22,9 +22,9 @@ namespace RayTraceDemo.RayCasting
 
         public RenderResult Render(int renderWidth)
         {
-            var result = new RenderResult();
+            var result = new RenderResult(renderWidth);
 
-            for (var column = 0; column < renderWidth; column++)
+            Parallel.For(0, renderWidth, column =>
             {
                 var x = (double)column / renderWidth - 0.5;
                 var angle = Math.Atan2(x, FocalLength);
@@ -32,9 +32,9 @@ namespace RayTraceDemo.RayCasting
                 var castDirection = ComputeDirection(angle);
                 var ray = Ray(column, new Ray.SamplePoint(Location2D), castDirection);
 
-                result.AllSamplePoints.AddRange(ray);
-                result.Columns.Add(ray.Last());
-            }
+                result.Columns[column] = ray[^1];
+                ray.ForEach(i => result.AllSamplePoints.Add(i));
+            });
 
             return result;
         }
@@ -134,10 +134,16 @@ namespace RayTraceDemo.RayCasting
             }
         }
 
-        public class RenderResult
+        public struct RenderResult
         {
-            public List<Ray.SamplePoint> Columns { get; } = new List<Ray.SamplePoint>();
-            public List<Ray.SamplePoint> AllSamplePoints { get; } = new List<Ray.SamplePoint>();
+            public Ray.SamplePoint[] Columns { get; set; }
+            public ConcurrentBag<Ray.SamplePoint> AllSamplePoints { get; }
+
+            public RenderResult(int renderWidth)
+            {
+                Columns = new Ray.SamplePoint[renderWidth];
+                AllSamplePoints = new ConcurrentBag<Ray.SamplePoint>();
+            }
         }
     }
 }
