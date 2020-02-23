@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 using RayTraceDemo.RayCasting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Image = System.Drawing.Image;
+using Keys = System.Windows.Forms.Keys;
 using Timer = System.Timers.Timer;
 
 namespace RayTraceDemo.WinForms
@@ -19,6 +21,7 @@ namespace RayTraceDemo.WinForms
         private readonly int _renderHeight;
         private readonly PictureBox _p;
         private readonly byte[] _bgBytes;
+        private Timer _timer;
 
         public Form1()
         {
@@ -51,39 +54,41 @@ namespace RayTraceDemo.WinForms
             _camera = new Camera(world.CameraLocation, world) { DirectionInDegrees = 0 };
             _renderer = new BitmapRenderer(_renderHeight, _renderWidth);
 
+            KeyDown += KeyDownHandler;
 
-            KeyDown += KeyPress;
-
-            var timer = new Timer((1000 / 60)) {AutoReset = true};
-            timer.Elapsed += OnInterval;
-            timer.Start();
+            _timer = new Timer((1000 / 30)) {AutoReset = true};
+            _timer.Elapsed += OnInterval;
+            _timer.Start();
         }
 
-        private void KeyPress(object sender, KeyEventArgs e)
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            if (e.KeyCode == Keys.Up)
-            {
-                _camera.Location2D = new Location2D {X = _camera.Location2D.X, Y = _camera.Location2D.Y - 0.05};
-            }
+            base.OnFormClosed(e);
+            _timer.Dispose();
+        }
 
-            if (e.KeyCode == Keys.Down)
+        private void KeyDownHandler(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
             {
-                _camera.Location2D = new Location2D {X = _camera.Location2D.X, Y = _camera.Location2D.Y + 0.05};
-            }
-
-            if (e.KeyCode == Keys.Left)
-            {
-                _camera.DirectionInDegrees -= 1;
-            }
-            if (e.KeyCode == Keys.Right)
-            {
-                _camera.DirectionInDegrees += 1;
+                case Keys.Up:
+                    _camera.Location2D = new Location2D {X = _camera.Location2D.X, Y = _camera.Location2D.Y - 0.05};
+                    break;
+                case Keys.Down:
+                    _camera.Location2D = new Location2D {X = _camera.Location2D.X, Y = _camera.Location2D.Y + 0.05};
+                    break;
+                case Keys.Left:
+                    _camera.DirectionInDegrees -= 1;
+                    break;
+                case Keys.Right:
+                    _camera.DirectionInDegrees += 1;
+                    break;
             }
         }
 
         private void OnInterval(object sender, System.Timers.ElapsedEventArgs e)
         {
-            lock (_p)
+            if(Monitor.TryEnter(_p))
             {
                 var result = _camera.Render(_renderWidth);
                 var pixels = _renderer.RenderBitmap(result.Columns, _camera);
@@ -105,10 +110,13 @@ namespace RayTraceDemo.WinForms
                     }
                 }
 
+
                 var memoryStream = new MemoryStream();
                 img.SaveAsBmp(memoryStream);
                 _p.Image = Image.FromStream(memoryStream);
                 img.Dispose();
+
+                Monitor.Exit(_p);
             }
         }
     }
