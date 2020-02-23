@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using RayTraceDemo.RayCasting;
@@ -15,12 +16,9 @@ namespace RayTraceDemo.WinForms
     {
         private readonly BitmapRenderer _renderer;
         private readonly Camera _camera;
-        private readonly int _renderWidth;
-        private readonly int _renderHeight;
         private readonly PictureBox _p;
-        private readonly byte[] _bgBytes;
         private readonly Timer _timer;
-        private Image<Rgba32> _bgImg;
+        private readonly Image<Rgba32> _bgImg;
 
         public Form1()
         {
@@ -43,17 +41,13 @@ namespace RayTraceDemo.WinForms
                 "########################################",
             });
 
-            _renderWidth = 2560;
-            _renderHeight = 1440;
+            _renderer = new BitmapRenderer(1440, 2560);
+            _bgImg = LoadAndSizeBackground(_renderer.SampleWidth, _renderer.SampleHeight);
 
-            _bgBytes = LoadAndSizeBackground(_renderWidth, _renderHeight).ToArray();
-            _bgImg = SixLabors.ImageSharp.Image.Load<Rgba32>(_bgBytes);
-
-            _p = new PictureBox {Width = _renderWidth, Height = _renderHeight};
+            _p = new PictureBox {Width = _renderer.Width, Height = _renderer.Height };
             Controls.Add(_p);
             
             _camera = new Camera(world.CameraLocation, world) { DirectionInDegrees = 0 };
-            _renderer = new BitmapRenderer(_renderHeight, _renderWidth);
 
             KeyDown += KeyDownHandler;
 
@@ -63,15 +57,11 @@ namespace RayTraceDemo.WinForms
             _timer.Start();
         }
 
-        private static MemoryStream LoadAndSizeBackground(int renderWidth, int renderHeight)
+        private static Image<Rgba32> LoadAndSizeBackground(int renderWidth, int renderHeight)
         {
-            var bgBytes = File.ReadAllBytes("bg.jpg");
-            using var img = SixLabors.ImageSharp.Image.Load<Rgba32>(bgBytes);
-            var memoryStream = new MemoryStream();
+            var img = SixLabors.ImageSharp.Image.Load<Rgba32>(File.ReadAllBytes("bg.jpg"));
             img.Mutate(x => x.Resize(renderWidth, renderHeight));
-            img.SaveAsBmp(memoryStream);
-            memoryStream.Position = 0;
-            return memoryStream;
+            return img;
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -103,13 +93,13 @@ namespace RayTraceDemo.WinForms
         {
             if (!Monitor.TryEnter(_p)) return;
 
-            var result = _camera.Render(_renderWidth);
+            var result = _camera.Render(_renderer.SampleWidth);
             var pixels = _renderer.RenderBitmap(result.Columns, _camera);
             
             var img = _bgImg.Clone();
-            for (var y = 0; y < _renderHeight; y++)
+            for (var y = 0; y < _renderer.SampleHeight; y++)
             {
-                for (var x = 0; x < _renderWidth; x++)
+                for (var x = 0; x < _renderer.SampleWidth; x++)
                 {
                     if (pixels[x, y] == null)
                     {
@@ -120,6 +110,11 @@ namespace RayTraceDemo.WinForms
                 }
             }
 
+            if (_renderer.SampleScale != 1)
+            {
+                img.Mutate(x => x.Resize(_renderer.Width, _renderer.Height));
+            }
+            
             var memoryStream = new MemoryStream();
             img.SaveAsBmp(memoryStream);
             _p.Image = Image.FromStream(memoryStream);
