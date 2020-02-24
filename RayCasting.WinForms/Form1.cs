@@ -17,7 +17,7 @@ namespace RayCasting.WinForms
     {
         private readonly BitmapRenderer _renderer;
         private readonly Camera _camera;
-        private readonly PictureBox _p;
+        private readonly PictureBox _renderedImage;
         private readonly Timer _timer;
         private readonly Image<Rgba32> _bgImg;
 
@@ -44,16 +44,15 @@ namespace RayCasting.WinForms
 
             _renderer = new BitmapRenderer(1440, 2560);
             _bgImg = LoadAndSizeBackground(_renderer.SampleWidth, _renderer.SampleHeight);
-
-            _p = new PictureBox {Width = _renderer.Width, Height = _renderer.Height };
-            Controls.Add(_p);
-            
             _camera = new Camera(world.CameraLocation, world) { DirectionInDegrees = 0 };
 
+            _renderedImage = new PictureBox {Width = _renderer.Width, Height = _renderer.Height };
+            Controls.Add(_renderedImage);
+
             KeyDown += KeyDownHandler;
-            _p.MouseDown += OnMouseDown;
-            _p.MouseUp += OnMouseUp;
-            _p.MouseMove += Move;
+            _renderedImage.MouseDown += OnMouseDown;
+            _renderedImage.MouseUp += OnMouseUp;
+            _renderedImage.MouseMove += MeasureMovement;
 
             const int fps = 60;
             _timer = new Timer((1000 / fps)) {AutoReset = true};
@@ -77,7 +76,7 @@ namespace RayCasting.WinForms
             Cursor.Show();
         }
 
-        private void Move(object sender, MouseEventArgs e)
+        private void MeasureMovement(object sender, MouseEventArgs e)
         {
             if (!_captured) return;
 
@@ -125,7 +124,7 @@ namespace RayCasting.WinForms
 
         private void OnInterval(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (!Monitor.TryEnter(_p)) return;
+            if (!Monitor.TryEnter(_renderedImage)) return;
 
             var result = _camera.Snapshot(_renderer.SampleWidth);
             var pixels = _renderer.RenderBitmap(result.Columns, _camera);
@@ -151,10 +150,10 @@ namespace RayCasting.WinForms
             
             var memoryStream = new MemoryStream();
             img.SaveAsBmp(memoryStream);
-            _p.Image = Image.FromStream(memoryStream);
+            _renderedImage.Image = Image.FromStream(memoryStream);
             img.Dispose();
 
-            Monitor.Exit(_p);
+            Monitor.Exit(_renderedImage);
         }
     }
 }
