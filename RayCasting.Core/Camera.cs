@@ -51,10 +51,6 @@ namespace RayCasting.Core
 
         private static CastDirection ComputeDirection(double directionDegrees, double angle)
         {
-            // Covert to radians so angle calc works
-            // The - 90.1 degrees is to re-orientate the player to be "facing upwards" in the world by default
-            // rather than to the left (following array index direction).
-
             var radians = Math.PI / 180 * directionDegrees; 
             var directionInDegrees = radians + angle;
             return new CastDirection(directionInDegrees);
