@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -51,12 +53,41 @@ namespace RayTraceDemo.WinForms
             _camera = new Camera(world.CameraLocation, world) { DirectionInDegrees = 0 };
 
             KeyDown += KeyDownHandler;
+            _p.MouseDown += MouseDown;
+            _p.MouseUp += MouseUp;
+            _p.MouseMove += MouseMove;
 
-            const int fps = 30;
+            const int fps = 60;
             _timer = new Timer((1000 / fps)) {AutoReset = true};
             _timer.Elapsed += OnInterval;
             _timer.Start();
         }
+
+        private Point _previousLocation;
+        private bool _captured;
+
+        private void MouseDown(object sender, MouseEventArgs e)
+        {
+            _previousLocation = e.Location;
+            _captured = true;
+            Cursor.Hide();
+        }
+
+        private void MouseUp(object sender, MouseEventArgs e)
+        {
+            _captured = false;
+            Cursor.Show();
+        }
+
+        private void MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_captured) return;
+
+            var difference = e.Location - (Size)_previousLocation;
+            _camera.DirectionInDegrees += (double)difference.X / 30;
+            _previousLocation = e.Location;
+        }
+
 
         private static Image<Rgba32> LoadAndSizeBackground(int renderWidth, int renderHeight)
         {
