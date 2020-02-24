@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RayTraceDemo.RayCasting;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace RayTraceDemo
+namespace RayCasting.Core
 {
     public class BitmapRenderer
     {
@@ -41,11 +40,11 @@ namespace RayTraceDemo
 
                 for (var y = 0; y < height; y++)
                 {
-                    var yCoord = SampleHeight - y - 1;
-                    yCoord = yCoord < 0 ? 0 : yCoord;
-                    yCoord -= offset;
+                    var yCoordinate = SampleHeight - y - 1;
+                    yCoordinate = yCoordinate < 0 ? 0 : yCoordinate;
+                    yCoordinate -= offset;
 
-                    pixels[column, yCoord] = texture;
+                    pixels[column, yCoordinate] = texture;
                 }
             });
             

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RayTraceDemo.RayCasting
+namespace RayCasting.Core
 {
     public class Map
     {

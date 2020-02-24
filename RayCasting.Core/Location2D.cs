@@ -1,4 +1,4 @@
-﻿namespace RayTraceDemo.RayCasting
+﻿namespace RayCasting.Core
 {
     public struct Location2D
     {

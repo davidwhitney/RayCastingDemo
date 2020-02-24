@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-namespace RayTraceDemo.RayCasting
+namespace RayCasting.Core
 {
     public class Camera
     {
@@ -20,7 +20,7 @@ namespace RayTraceDemo.RayCasting
             FocalLength = focalLength;
         }
 
-        public RenderResult Render(int renderWidth)
+        public RenderResult Snapshot(int renderWidth, bool includeDebugInfo = false)
         {
             var result = new RenderResult(renderWidth);
 
@@ -33,7 +33,11 @@ namespace RayTraceDemo.RayCasting
                 var ray = Ray(column, new Ray.SamplePoint(Location2D), castDirection);
 
                 result.Columns[column] = ray[^1];
-                ray.ForEach(i => result.AllSamplePoints.Add(i));
+
+                if (includeDebugInfo)
+                {
+                    ray.ForEach(i => result.AllSamplePoints.Add(i));
+                }
             });
 
             return result;

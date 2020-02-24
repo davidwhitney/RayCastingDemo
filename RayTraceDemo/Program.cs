@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using RayTraceDemo.RayCasting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using RayCasting.Core;
 
 namespace RayTraceDemo
 {
@@ -31,7 +31,7 @@ namespace RayTraceDemo
 
             var camera = new Camera(world.CameraLocation, world) {DirectionInDegrees = 0};
             var renderer = new BitmapRenderer(1440, 2560);
-            var result = camera.Render(renderer.Width);
+            var result = camera.Snapshot(renderer.Width, true);
 
             Console.WriteLine("Rays cast to render image:");
             Console.WriteLine(world.ToDebugString(result.AllSamplePoints));

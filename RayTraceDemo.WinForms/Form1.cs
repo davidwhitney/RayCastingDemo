@@ -2,13 +2,14 @@
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using RayTraceDemo.RayCasting;
+using RayCasting.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Image = System.Drawing.Image;
 using Keys = System.Windows.Forms.Keys;
 using Timer = System.Timers.Timer;
+
 
 namespace RayTraceDemo.WinForms
 {
@@ -93,7 +94,7 @@ namespace RayTraceDemo.WinForms
         {
             if (!Monitor.TryEnter(_p)) return;
 
-            var result = _camera.Render(_renderer.SampleWidth);
+            var result = _camera.Snapshot(_renderer.SampleWidth);
             var pixels = _renderer.RenderBitmap(result.Columns, _camera);
             
             var img = _bgImg.Clone();

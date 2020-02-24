@@ -1,4 +1,4 @@
-﻿namespace RayTraceDemo.RayCasting
+﻿namespace RayCasting.Core
 {
     public class Surface
     {

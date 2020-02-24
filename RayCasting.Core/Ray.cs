@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RayTraceDemo.RayCasting
+namespace RayCasting.Core
 {
     public class Ray : List<Ray.SamplePoint>
     {
