@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace RayCasting.Core
 {
@@ -23,8 +22,8 @@ namespace RayCasting.Core
         public RenderResult Snapshot(int renderWidth, bool includeDebugInfo = false)
         {
             var result = new RenderResult(renderWidth);
-
-            Parallel.For(0, renderWidth, column =>
+            
+            for (var column = 0; column < renderWidth; column++)
             {
                 var x = (double)column / renderWidth - 0.5;
                 var angle = Math.Atan2(x, FocalLength);
@@ -38,7 +37,7 @@ namespace RayCasting.Core
                 {
                     ray.ForEach(i => result.AllSamplePoints.Add(i));
                 }
-            });
+            }
 
             return result;
         }
