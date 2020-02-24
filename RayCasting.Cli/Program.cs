@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using RayCasting.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -50,7 +51,7 @@ namespace RayCasting.Cli
             using var img = Image.Load<Rgba32>(File.ReadAllBytes("bg.jpg"));
             img.Mutate(x => x.Resize(renderWidth, renderHeight));
 
-            for (var y = 0; y < renderHeight; y++)
+            Parallel.For(0, renderHeight, y =>
             {
                 for (var x = 0; x < renderWidth; x++)
                 {
@@ -62,11 +63,10 @@ namespace RayCasting.Cli
                     
                     img[x, y] = rgba32.Value;
                 }
-            }
+            });
 
             var memoryStream = new MemoryStream();
             img.SaveAsJpeg(memoryStream);
-            memoryStream.Position = 0;
             File.WriteAllBytes("out.jpg", memoryStream.ToArray());
 
             return Path.Combine(Environment.CurrentDirectory, "out.jpg");
