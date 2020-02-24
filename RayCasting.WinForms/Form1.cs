@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using RayCasting.Core;
@@ -12,8 +11,7 @@ using Image = System.Drawing.Image;
 using Keys = System.Windows.Forms.Keys;
 using Timer = System.Timers.Timer;
 
-
-namespace RayTraceDemo.WinForms
+namespace RayCasting.WinForms
 {
     public partial class Form1 : Form
     {
@@ -53,9 +51,9 @@ namespace RayTraceDemo.WinForms
             _camera = new Camera(world.CameraLocation, world) { DirectionInDegrees = 0 };
 
             KeyDown += KeyDownHandler;
-            _p.MouseDown += MouseDown;
-            _p.MouseUp += MouseUp;
-            _p.MouseMove += MouseMove;
+            _p.MouseDown += OnMouseDown;
+            _p.MouseUp += OnMouseUp;
+            _p.MouseMove += Move;
 
             const int fps = 60;
             _timer = new Timer((1000 / fps)) {AutoReset = true};
@@ -66,20 +64,20 @@ namespace RayTraceDemo.WinForms
         private Point _previousLocation;
         private bool _captured;
 
-        private void MouseDown(object sender, MouseEventArgs e)
+        private void OnMouseDown(object sender, MouseEventArgs e)
         {
             _previousLocation = e.Location;
             _captured = true;
             Cursor.Hide();
         }
 
-        private void MouseUp(object sender, MouseEventArgs e)
+        private void OnMouseUp(object sender, MouseEventArgs e)
         {
             _captured = false;
             Cursor.Show();
         }
 
-        private void MouseMove(object sender, MouseEventArgs e)
+        private void Move(object sender, MouseEventArgs e)
         {
             if (!_captured) return;
 

@@ -1,4 +1,4 @@
-﻿namespace RayTraceDemo.WinForms
+﻿namespace RayCasting.WinForms
 {
     partial class Form1
     {
