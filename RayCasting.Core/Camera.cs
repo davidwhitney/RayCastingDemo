@@ -6,17 +6,17 @@ namespace RayCasting.Core
     public class Camera
     {
         public Location2D Location2D { get; set; }
-        public int Range { get; set; }
-        public double FocalLength { get; }
         public Map World { get; }
+        public int Range { get; }
+        public double FocalLength { get; }
 
-        private double _directionInDegrees;
         public double DirectionInDegrees
         {
             get => _directionInDegrees;
             set => _directionInDegrees = value % 360;
         }
 
+        private double _directionInDegrees;
 
         public Camera(Location2D location, Map world, int range = 25, double focalLength = 0.8)
         {
@@ -29,13 +29,13 @@ namespace RayCasting.Core
         public RenderResult Snapshot(int renderWidth, bool includeDebugInfo = false)
         {
             var result = new RenderResult(renderWidth);
-            
+
             for (var column = 0; column < renderWidth; column++)
             {
-                var x = (double)column / renderWidth - 0.5;
+                var x = (double) column / renderWidth - 0.5;
                 var angle = Math.Atan2(x, FocalLength);
 
-                var castDirection = ComputeDirection(angle);
+                var castDirection = ComputeDirection(DirectionInDegrees, angle);
                 var ray = Ray(column, new Ray.SamplePoint(Location2D), castDirection);
 
                 result.Columns[column] = ray[^1];
@@ -49,13 +49,13 @@ namespace RayCasting.Core
             return result;
         }
 
-        private CastDirection ComputeDirection(double angle)
+        private static CastDirection ComputeDirection(double directionDegrees, double angle)
         {
             // Covert to radians so angle calc works
             // The - 90.1 degrees is to re-orientate the player to be "facing upwards" in the world by default
             // rather than to the left (following array index direction).
 
-            var radians = (Math.PI / 180) * (DirectionInDegrees - 90.1); 
+            var radians = Math.PI / 180 * directionDegrees; 
             var directionInDegrees = radians + angle;
             return new CastDirection(directionInDegrees);
         }

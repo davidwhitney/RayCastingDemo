@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using RayCasting.Core;
 using SixLabors.ImageSharp;
@@ -35,10 +36,10 @@ namespace RayCasting.WinForms
                 "###                                    #",
                 "##                                     #",
                 "#                               ########",
-                "#                               ########",
+                "#        c                      ########",
                 "#                                      #",
                 "###                                    #",
-                "###        c                           #",
+                "###                                    #",
                 "########################################",
             });
 
@@ -46,7 +47,7 @@ namespace RayCasting.WinForms
             _bgImg = LoadAndSizeBackground(_renderer.SampleWidth, _renderer.SampleHeight);
             _camera = new Camera(world.CameraLocation, world) { DirectionInDegrees = 0 };
 
-            _renderedImage = new PictureBox {Width = _renderer.Width, Height = _renderer.Height };
+            _renderedImage = new PictureBox {Width = _renderer.Width, Height = _renderer.Height};
             Controls.Add(_renderedImage);
 
             KeyDown += KeyDownHandler;
@@ -60,11 +61,13 @@ namespace RayCasting.WinForms
             _timer.Start();
         }
 
+        private Point _originLocation;
         private Point _previousLocation;
         private bool _captured;
 
         private void OnMouseDown(object sender, MouseEventArgs e)
         {
+            _originLocation = Cursor.Position;
             _previousLocation = e.Location;
             _captured = true;
             Cursor.Hide();
@@ -73,6 +76,7 @@ namespace RayCasting.WinForms
         private void OnMouseUp(object sender, MouseEventArgs e)
         {
             _captured = false;
+            Cursor.Position = _originLocation;
             Cursor.Show();
         }
 
@@ -101,22 +105,26 @@ namespace RayCasting.WinForms
 
         private void KeyDownHandler(object sender, KeyEventArgs e)
         {
-            var degrees = _camera.DirectionInDegrees + 90.0;
+            var degrees = _camera.DirectionInDegrees;
             var x = Math.Cos(degrees * Math.PI / 180) * 0.35;
             var y = Math.Sin(degrees * Math.PI / 180) * 0.35;
 
             switch (e.KeyCode)
             {
                 case Keys.Up:
-                    _camera.Location2D = new Location2D {X = _camera.Location2D.X - x, Y = _camera.Location2D.Y - y};
-                    break;
-                case Keys.Down:
+                case Keys.W:
                     _camera.Location2D = new Location2D {X = _camera.Location2D.X + x, Y = _camera.Location2D.Y + y};
                     break;
+                case Keys.Down:
+                case Keys.S:
+                    _camera.Location2D = new Location2D {X = _camera.Location2D.X - x, Y = _camera.Location2D.Y - y};
+                    break;
                 case Keys.Left:
+                case Keys.A:
                     _camera.DirectionInDegrees -= 1;
                     break;
                 case Keys.Right:
+                case Keys.D:
                     _camera.DirectionInDegrees += 1;
                     break;
             }
@@ -130,7 +138,8 @@ namespace RayCasting.WinForms
             var pixels = _renderer.RenderBitmap(result.Columns, _camera);
             
             var img = _bgImg.Clone();
-            for (var y = 0; y < _renderer.SampleHeight; y++)
+
+            Parallel.For(0, _renderer.SampleHeight, y =>
             {
                 for (var x = 0; x < _renderer.SampleWidth; x++)
                 {
@@ -141,7 +150,7 @@ namespace RayCasting.WinForms
 
                     img[x, y] = pixels[x, y].Value;
                 }
-            }
+            });
 
             if (_renderer.SampleScale != 1)
             {
@@ -150,8 +159,9 @@ namespace RayCasting.WinForms
             
             var memoryStream = new MemoryStream();
             img.SaveAsBmp(memoryStream);
-            _renderedImage.Image = Image.FromStream(memoryStream);
             img.Dispose();
+
+            _renderedImage.Image = Image.FromStream(memoryStream);
 
             Monitor.Exit(_renderedImage);
         }
