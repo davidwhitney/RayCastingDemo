@@ -6,10 +6,17 @@ namespace RayCasting.Core
     public class Camera
     {
         public Location2D Location2D { get; set; }
-        public double DirectionInDegrees { get; set; }
         public int Range { get; set; }
         public double FocalLength { get; }
         public Map World { get; }
+
+        private double _directionInDegrees;
+        public double DirectionInDegrees
+        {
+            get => _directionInDegrees;
+            set => _directionInDegrees = value % 360;
+        }
+
 
         public Camera(Location2D location, Map world, int range = 25, double focalLength = 0.8)
         {

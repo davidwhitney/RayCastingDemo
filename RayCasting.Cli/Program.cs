@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using RayCasting.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using RayCasting.Core;
 
-namespace RayTraceDemo
+namespace RayCasting.Cli
 {
     public class Program
     {

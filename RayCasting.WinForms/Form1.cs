@@ -104,13 +104,17 @@ namespace RayTraceDemo.WinForms
 
         private void KeyDownHandler(object sender, KeyEventArgs e)
         {
+            var degrees = _camera.DirectionInDegrees + 90.0;
+            var x = Math.Cos(degrees * Math.PI / 180) * 0.35;
+            var y = Math.Sin(degrees * Math.PI / 180) * 0.35;
+
             switch (e.KeyCode)
             {
                 case Keys.Up:
-                    _camera.Location2D = new Location2D {X = _camera.Location2D.X, Y = _camera.Location2D.Y - 0.05};
+                    _camera.Location2D = new Location2D {X = _camera.Location2D.X - x, Y = _camera.Location2D.Y - y};
                     break;
                 case Keys.Down:
-                    _camera.Location2D = new Location2D {X = _camera.Location2D.X, Y = _camera.Location2D.Y + 0.05};
+                    _camera.Location2D = new Location2D {X = _camera.Location2D.X + x, Y = _camera.Location2D.Y + y};
                     break;
                 case Keys.Left:
                     _camera.DirectionInDegrees -= 1;
