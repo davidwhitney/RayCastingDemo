@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace RayCasting.Core
 {
@@ -30,7 +31,7 @@ namespace RayCasting.Core
         {
             var result = new RenderResult(renderWidth);
 
-            for (var column = 0; column < renderWidth; column++)
+            Parallel.For(0, renderWidth, column =>
             {
                 var x = (double) column / renderWidth - 0.5;
                 var angle = Math.Atan2(x, FocalLength);
@@ -44,7 +45,7 @@ namespace RayCasting.Core
                 {
                     ray.ForEach(i => result.AllSamplePoints.Add(i));
                 }
-            }
+            });
 
             return result;
         }
@@ -71,7 +72,6 @@ namespace RayCasting.Core
                 var nextStep = stepX.Length < stepY.Length
                     ? Inspect(stepX, 1, 0, currentStep.Distance, castDirection)
                     : Inspect(stepY, 0, 1, currentStep.Distance, castDirection);
-
 
                 if (nextStep.Surface.HasNoHeight)
                 {
