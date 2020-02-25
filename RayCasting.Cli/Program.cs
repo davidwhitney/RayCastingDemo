@@ -40,11 +40,11 @@ namespace RayCasting.Cli
                 return;
             }
 
+            Console.WindowHeight = 80;
+            Console.WindowWidth = 140; 
+
             Console.WriteLine("Rays cast to render image:");
             Console.WriteLine(world.ToDebugString(result.AllSamplePoints));
-
-            Console.WindowHeight = 80;
-            Console.WindowWidth = 140;
             Console.WriteLine(asAsciiArt);
 
             var path = Path.Combine(Environment.CurrentDirectory, "out.jpg");

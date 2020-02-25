@@ -40,7 +40,7 @@ namespace RayCasting.Cli
             var image = Image.Load(jpg);
             image.Mutate(x=>x.Resize(100, 50));
 
-            var map = Map.OrderBy(kvp => kvp.Key);
+            var map = Map.OrderBy(kvp => kvp.Key).ToList();
             var sb = new StringBuilder();
 
             for (var y = 0; y < image.Height; y++)
@@ -48,7 +48,7 @@ namespace RayCasting.Cli
                 for (var x = 0; x < image.Width; x++)
                 {
                     var pixel = image[x, y];
-                    var currentChar = MapColourToCharacter(map, pixel);
+                    var currentChar = MapToAscii(map, pixel);
 
                     sb.Append(currentChar);
                 }
@@ -61,15 +61,14 @@ namespace RayCasting.Cli
             return PostProcessOutput(sb);
         }
 
-        private static string MapColourToCharacter(IEnumerable<KeyValuePair<float, string>> map, Rgba32 pixel)
+        private static string MapToAscii(IEnumerable<KeyValuePair<float, string>> map, Rgba32 pixel)
         {
-            var brightness = pixel.R;
             var currentChar = "";
-            foreach (var kvp in map)
+            foreach (var (key, value) in map)
             {
-                if (kvp.Key <= brightness)
+                if (key <= pixel.R)
                 {
-                    currentChar = kvp.Value;
+                    currentChar = value;
                 }
             }
             return currentChar;
